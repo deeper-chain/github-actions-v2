@@ -212,6 +212,7 @@ jobs:
               ]
             }
   deploy:
+    if: always() && (needs.build.result == 'skipped' || needs.build.result == 'success')
     runs-on: ubuntu-latest
     outputs:
       domain: ${{ steps.domain.outputs.domain }}
