@@ -226,8 +226,16 @@ jobs:
           payload: |
             {
               "thread_ts": "${{ needs.collect.outputs.slack_ts }}",
-              "text": "Deploying new docker image..."
+              "text": "Deploying..."
             }
+      - name: deploy by script
+        id: deploy-by-script
+        env:
+          BRANCH: ${{ needs.collect.outputs.branch }}
+          DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT }}
+        if: env.DEPLOY_SCRIPT != ''
+        run: ${{ secrets.DEPLOY_SCRIPT }}
+
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
@@ -269,7 +277,7 @@ jobs:
             }
       - uses: slackapi/slack-github-action@v1.26.0
         env:
-          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN }}
+          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN || steps.deploy-by-script.outputs.domain }}
         if: env.DOMAIN != '' && needs.build.outputs.has_version_file == 'true'
         with:
           channel-id: "${{ secrets.SLACK_CHANNEL_ID }}"
@@ -300,7 +308,7 @@ jobs:
 
       - uses: slackapi/slack-github-action@v1.26.0
         env:
-          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN }}
+          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN || steps.deploy-by-script.outputs.domain }}
         if: env.DOMAIN != ''
         with:
           channel-id: "${{ secrets.SLACK_CHANNEL_ID }}"
@@ -323,7 +331,7 @@ jobs:
             }
       - uses: slackapi/slack-github-action@v1.26.0
         env:
-          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN }}
+          DOMAIN: ${{ steps.domain.outputs.domain || secrets.DOMAIN || steps.deploy-by-script.outputs.domain}}
         if: env.RESTART_K8S_DEPLOYMENT == 'true' && env.DOMAIN == ''
         with:
           channel-id: "${{ secrets.SLACK_CHANNEL_ID }}"
@@ -344,13 +352,6 @@ jobs:
                 }
               ]
             }
-
-      - name: deploy by script
-        env:
-          BRANCH: ${{ needs.collect.outputs.branch }}
-          DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT }}
-        if: env.DEPLOY_SCRIPT != ''
-        run: ${{ secrets.DEPLOY_SCRIPT }}
 
       - uses: slackapi/slack-github-action@v1.26.0
         with:
