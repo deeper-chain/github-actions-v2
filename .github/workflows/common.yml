@@ -323,7 +323,7 @@ jobs:
                     {
                       "title": "URL",
                       "short": true,
-                      "value": "https://${{ env.DOMAIN }}/"
+                      "value": "https://${{ env.DOMAIN }}"
                     }
                   ]
                 }
