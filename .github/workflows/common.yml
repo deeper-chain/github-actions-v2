@@ -8,7 +8,16 @@ on:
         type: string
         required: false
         default: "Dockerfile"
-
+      other_repo_1:
+        description: "Other repo 1"
+        type: string
+        required: false
+        default: ""
+      other_repo_1_path:
+        description: "Other repo 1 path"
+        type: string
+        required: false
+        default: ""
 env:
   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
   RESTART_K8S_DEPLOYMENT: ${{ vars.RESTART_K8S_DEPLOYMENT }}
@@ -120,6 +129,13 @@ jobs:
           fetch-depth: 0
           submodules: true
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Check out other repo 1
+        uses: actions/checkout@v4
+        if: ${{ inputs.other_repo_1 != '' && inputs.other_repo_1_path != '' }}
+        with:
+          repository: ${{ inputs.other_repo_1 }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          path: ${{ inputs.other_repo_1_path }}
       - name: write git version
         shell: bash
         id: write-version
@@ -153,7 +169,7 @@ jobs:
         run: echo "docker_image=${{ secrets.DOCKER_REGISTRY }}/${{ github.repository }}:${{ needs.collect.outputs.docker_tag }}" >> $GITHUB_OUTPUT
       - name: before build
         env:
-          BEFORE_BUILD_SCRIPT: ${{ secrets.BEFORE_BUILD_SCRIPT }}
+          BEFORE_BUILD_SCRIPT: ${{ vars.BEFORE_BUILD_SCRIPT || secrets.BEFORE_BUILD_SCRIPT }}
         if: ${{ env.BEFORE_BUILD_SCRIPT != '' }}
         run: ${{ env.BEFORE_BUILD_SCRIPT }}
       - name: Build and push
@@ -232,7 +248,7 @@ jobs:
         id: deploy-by-script
         env:
           BRANCH: ${{ needs.collect.outputs.branch }}
-          DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT }}
+          DEPLOY_SCRIPT: ${{ vars.DEPLOY_SCRIPT || secrets.DEPLOY_SCRIPT }}
         if: env.DEPLOY_SCRIPT != ''
         run: ${{ secrets.DEPLOY_SCRIPT }}
 
